@@ -25,21 +25,23 @@ RUN mkdir -p /etc/aria2\
   && mkdir -p /data/Nginx-Fancyindex-Theme-dark\
   && mkdir -p /root/Nginx-Fancyindex-Theme
 RUN curl -qLo- https://github.com/Naereen/Nginx-Fancyindex-Theme/archive/master.tar.gz | tar --strip-components=1 -C /root/Nginx-Fancyindex-Theme -xvzf -
-RUN cp -r /root/Nginx-Fancyindex-Theme/Nginx-Fancyindex-Theme-dark/* /data/Nginx-Fancyindex-Theme-dark/
+RUN cp -r /root/Nginx-Fancyindex-Theme/Nginx-Fancyindex-Theme-dark/* /data/Nginx-Fancyindex-Theme-dark/ && rm -rf /root/Nginx-Fancyindex-Theme
 RUN adduser aria2\
   --disabled-password
 RUN addgroup aria2 nginx
-VOLUME /data/storage
 COPY ./config /app/config
 RUN echo "$(cat /app/config/aria2.conf)" >> /etc/aria2/aria2.conf\
   && echo "$(cat /app/config/nginx.conf)" > /etc/nginx/http.d/default.conf
 RUN chown -R aria2:aria2 /app\
   && chown -R aria2:aria2 /data\
-  && chmod -R 0755 /data
+  && chown -R root:root /data/Nginx-Fancyindex-Theme-dark\
+  && chmod -R 0777 /data\
+  && chmod -R 0755 /data/Nginx-Fancyindex-Theme-dark
 RUN chmod -R g+rwx /var/log/nginx\
   && chmod -R g+rwx /var/lib/nginx\
   && chmod -R g+rwx /run/nginx\
   && chmod -R g+rwx /usr/lib/nginx
+VOLUME /data/storage
 # create aria2.session
 RUN touch /etc/aria2/aria2.session
 COPY --from=aria2webui-builder /app/dist/ /app/static
