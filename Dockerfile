@@ -1,5 +1,11 @@
-FROM alpine:3 AS aria2webui-builder
+FROM alpine:3 AS joinprocess-buidler
+WORKDIR /app
+RUN apk add --update gcc musl-dev
+RUN mkdir -p /usr/local/src
+COPY ./join_process /usr/local/src/join_process
+RUN gcc /usr/local/src/join_process/main.c -o /usr/local/bin/join_process
 
+FROM alpine:3 AS aria2webui-builder
 WORKDIR /app
 RUN apk add --update nodejs npm curl
 RUN curl -qLo- https://github.com/mayswind/AriaNg/archive/master.tar.gz | tar --strip-components=1 -C /app -xvzf -
@@ -37,6 +43,7 @@ RUN chmod -R g+rwx /var/log/nginx\
 # create aria2.session
 RUN touch /etc/aria2/aria2.session
 COPY --from=aria2webui-builder /app/dist/ /app/static
+COPY --from=joinprocess-buidler /usr/local/bin/join_process /usr/local/bin/join_process
 EXPOSE $WEBUI_PORT $RPC_LISTEN_PORT $BT_LISTEN_PORT $DHT_LISTEN_PORT
 USER aria2
-CMD [ "/usr/bin/parallel", ":::", "aria2c --conf-path=/etc/aria2/aria2.conf","nginx -g 'daemon off;'" ]
+CMD [ "/usr/local/bin/join_process","aria2c","--conf-path=/etc/aria2/aria2.conf","::::", "nginx","-g","daemon off;" ]
