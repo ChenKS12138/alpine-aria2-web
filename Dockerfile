@@ -1,8 +1,8 @@
 FROM alpine:3 AS aria2webui-builder
 
 WORKDIR /app
-RUN apk add --update nodejs npm
-RUN wget -qO- https://github.com/mayswind/AriaNg/archive/master.tar.gz | tar --strip-components=1 -C /app -xvzf -
+RUN apk add --update nodejs npm curl
+RUN curl -qLo- https://github.com/mayswind/AriaNg/archive/master.tar.gz | tar --strip-components=1 -C /app -xvzf -
 RUN npm i -g gulp
 RUN npm i -y
 RUN gulp clean build
@@ -13,18 +13,17 @@ ENV RPC_LISTEN_PORT 6800
 ENV BT_LISTEN_PORT 51413
 ENV DHT_LISTEN_PORT 51415
 WORKDIR /app
-RUN apk add --update --no-cache aria2 nginx nginx-mod-http-fancyindex parallel
+RUN apk add --update --no-cache aria2 nginx nginx-mod-http-fancyindex curl parallel
 RUN mkdir -p /etc/aria2\
   && mkdir -p /var/log/aria2\
-  && mkdir -p /data\
+  && mkdir -p /data/Nginx-Fancyindex-Theme-dark\
   && mkdir -p /root/Nginx-Fancyindex-Theme
-RUN wget -qO- https://github.com/Naereen/Nginx-Fancyindex-Theme/archive/master.tar.gz | tar --strip-components=1 -C /root/Nginx-Fancyindex-Theme -xvzf -\
-  && cp -r /root/Nginx-Fancyindex-Theme/Nginx-Fancyindex-Theme-dark /data/Nginx-Fancyindex-Theme-dark\
-  && rm -rf /root/Nginx-Fancyindex-Theme
+RUN curl -qLo- https://github.com/Naereen/Nginx-Fancyindex-Theme/archive/master.tar.gz | tar --strip-components=1 -C /root/Nginx-Fancyindex-Theme -xvzf -
+RUN cp -r /root/Nginx-Fancyindex-Theme/Nginx-Fancyindex-Theme-dark/* /data/Nginx-Fancyindex-Theme-dark/
 RUN adduser aria2\
   --disabled-password
 RUN addgroup aria2 nginx
-VOLUME /data
+VOLUME /data/storage
 COPY ./config /app/config
 RUN echo "$(cat /app/config/aria2.conf)" >> /etc/aria2/aria2.conf\
   && echo "$(cat /app/config/nginx.conf)" > /etc/nginx/http.d/default.conf
